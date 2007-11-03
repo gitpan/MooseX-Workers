@@ -1,6 +1,6 @@
 package MooseX::Workers;
 use strict;
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 
 use Moose::Role;
 use MooseX::Workers::Engine;
@@ -20,6 +20,12 @@ has Engine => (
     ],
 );
 
+sub spawn {
+    my ( $self, $cmd, $args ) = @_;
+    return $self->Engine->call( add_worker => $cmd => $args );
+}
+__PACKAGE__->meta->alias_method( 'fork' => __PACKAGE__->can('spawn') );
+
 sub run_command {
     my ( $self, $cmd ) = @_;
     $self->Engine->yield( add_worker => $cmd );
@@ -28,7 +34,6 @@ sub run_command {
 sub check_worker_threashold {
     return $_[0]->num_workers >= $_[0]->max_workers;
 }
-
 
 no Moose::Role;
 1;
@@ -51,7 +56,7 @@ This document describes MooseX::Workers version 0.0.1
     with qw(MooseX::Workers);
 
     sub run { 
-        $_[0]->run_command(sub { sleep 500; print "Hello World\n"});
+        $_[0]->spawn(sub { sleep 500; print "Hello World\n"});
         warn "Running now ... ";
     }
 
@@ -81,6 +86,8 @@ POE::Wheel::Run module.
 
 =over 
 
+=item spawn ($command)
+=item fork ($command)
 =item run_command ($command)
 
 This is the whole point of this module. This will pass $command through to the 
@@ -213,6 +220,7 @@ L<http://rt.cpan.org>.
 
 Chris Prather  C<< <perigrin@cpan.org> >>
 
+Tom Lanyon C<< <dec@cpan.org> >>
 
 =head1 LICENCE AND COPYRIGHT
 

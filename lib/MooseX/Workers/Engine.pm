@@ -48,6 +48,7 @@ has session => (
                       _worker_stderr
                       _worker_error
                       _worker_done
+                      _worker_started
                       _sig_child
                       add_worker
                       )
@@ -64,36 +65,51 @@ sub yield {
     $poe_kernel->post( $self->session => @_ );
 }
 
+sub call {
+    my $self = shift;
+    return $poe_kernel->call( $self->session => @_ );
+}
+
 #
 # EVENTS
 #
 
 sub add_worker {
-    my ( $self, $command ) = @_[ OBJECT, ARG0 ];
+    my ( $self, $job, $args ) = @_[ OBJECT, ARG0, ARG1 ];
 
     # if we've reached the worker threashold, set off a warning
     if ( $self->num_workers >= $self->max_workers ) {
-        $self->visitor->max_workers_reached($command);
+        $self->visitor->max_workers_reached($job);
         return;
     }
 
+    my $command;
+    if ( blessed($job) && $job->isa('MooseX::Workers::Job') ) {
+        $command = $job->command;
+        $args ||= $job->args;
+    }
+    else {
+        $command = $job;
+    }
+
+    $args = [$args] unless ref $args eq 'ARRAY';
     my $wheel = POE::Wheel::Run->new(
         Program     => $command,
+        ProgramArgs => $args,
         StdoutEvent => '_worker_stdout',
         StderrEvent => '_worker_stderr',
         ErrorEvent  => '_worker_error',
         CloseEvent  => '_worker_done',
     );
     $self->set_worker( $wheel->ID => $wheel );
-    $self->visitor->worker_started( $wheel->ID => $command )
-      if $self->visitor->can('worker_started');
-    return 1;
+    $self->yield( '_worker_started' => $wheel->ID => $job );
+    return ( $wheel->ID => $wheel->PID );
 }
 
 sub _start {
     my ($self) = $_[OBJECT];
     $self->visitor->worker_manager_start()
-      if $self->visitor->can('worker_manager_stop');
+      if $self->visitor->can('worker_manager_start');
     $_[KERNEL]->sig( CHLD => '_sig_child' );
 }
 
@@ -139,6 +155,12 @@ sub _worker_done {
     $self->delete_worker( $_[ARG0] );
 }
 
+sub _worker_started {
+    my ( $self, $wheelid, $command ) = @_[ OBJECT, ARG0, ARG1 ];
+    $self->visitor->worker_started( $wheelid, $command )
+      if $self->visitor->can('worker_started');
+}
+
 no Moose;
 1;
 __END__
@@ -168,7 +190,8 @@ MooseX::Workers::Engine - Provide the workhorse to MooseX::Workers
   
 =head1 DESCRIPTION
 
-MooseX::Workers::Engine provides the main functionality to MooseX::Workers. It wraps a POE::Session and 
+MooseX::Workers::Engine provides the main functionality 
+to MooseX::Workers. It wraps a POE::Session and 
 
 =head1 ATTRIBUTES
 
@@ -199,6 +222,12 @@ Contains the POE::Session that controls the workers.
 =item yield
 
 Helper method to post events to our internal manager session.
+
+=item call
+
+Helper method to call events to our internal manager session. 
+This is synchronous and will block incoming data from the children 
+if it takes too long  to return.
 
 =item set_worker($key)
 

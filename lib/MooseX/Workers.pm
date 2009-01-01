@@ -1,6 +1,6 @@
 package MooseX::Workers;
 use strict;
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
 use Moose::Role;
 use MooseX::Workers::Engine;
@@ -16,6 +16,9 @@ has Engine => (
           max_workers
           has_workers
           num_workers
+          put_worker
+          kill_worker
+          get_worker
           )
     ],
 );
@@ -24,6 +27,7 @@ sub spawn {
     my ( $self, $cmd, $args ) = @_;
     return $self->Engine->call( add_worker => $cmd => $args );
 }
+
 __PACKAGE__->meta->alias_method( 'fork' => __PACKAGE__->can('spawn') );
 
 sub run_command {
@@ -55,23 +59,24 @@ This document describes MooseX::Workers version 0.0.1
     use Moose;
     with qw(MooseX::Workers);
 
-    sub run { 
-        $_[0]->spawn(sub { sleep 500; print "Hello World\n"});
+    sub run {
+        $_[0]->spawn( sub { sleep 3; print "Hello World\n" } );
         warn "Running now ... ";
+        POE::Kernel->run();
     }
 
     # Implement our Interface
     sub worker_manager_start { warn 'started worker manager' }
     sub worker_manager_stop  { warn 'stopped worker manager' }
     sub max_workers_reached  { warn 'maximum worker count reached' }
-    
+
     sub worker_stdout  { shift; warn join ' ', @_; }
     sub worker_stderr  { shift; warn join ' ', @_; }
     sub worker_error   { shift; warn join ' ', @_; }
     sub worker_done    { shift; warn join ' ', @_; }
     sub worker_started { shift; warn join ' ', @_; }
     sub sig_child      { shift; warn join ' ', @_; }
-    no Moose;    
+    no Moose;
 
     Manager->new->run();
   

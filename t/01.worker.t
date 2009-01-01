@@ -24,13 +24,16 @@ use lib qw(lib);
         my ( $self, $output ) = @_;
         ::is( $output, 'WORLD' );
     }
-    sub worker_error {  }
+    sub worker_error { ::fail('Got error?'.@_) }
     sub worker_done  { ::pass('worker done') }
 
     sub worker_started { ::pass('worker started') }
+    
+    sub run { 
+        $_[0]->spawn( sub { print "HELLO\n"; print STDERR "WORLD\n" } );
+        POE::Kernel->run();
+    }
     no Moose;
 }
 
-my $m = Manager->new();
-$m->spawn( sub { print "HELLO\n"; print STDERR "WORLD\n" } );
-POE::Kernel->run();
+Manager->new()->run();

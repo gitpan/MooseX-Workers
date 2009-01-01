@@ -16,6 +16,19 @@ has max_workers => (
     default => sub { 5 },
 );
 
+has process_list => (
+    metaclass  => 'Collection::Hash',
+    isa        => 'HashRef',
+    is         => 'ro',
+    auto_deref => 1,
+    default    => sub { {} },
+    provides   => {
+        set    => 'set_process',
+        get    => 'get_process',
+        delete => 'remove_process',
+    }
+);
+
 has workers => (
     isa       => 'HashRef',
     is        => 'rw',
@@ -26,7 +39,7 @@ has workers => (
     provides  => {
         'set'    => 'set_worker',
         'get'    => 'get_worker',
-        'delete' => 'delete_worker',
+        'delete' => 'remove_worker',
         'empty'  => 'has_workers',
         'count'  => 'num_workers',
     },
@@ -70,6 +83,16 @@ sub call {
     return $poe_kernel->call( $self->session => @_ );
 }
 
+sub put_worker {
+    my ( $self, $wheel_id ) = splice @_, 0, 2;
+    $self->get_worker($wheel_id)->put(@_);
+}
+
+sub kill_worker {
+    my ( $self, $wheel_id ) = splice @_, 0, 2;
+    $self->get_wheel($wheel_id)->kill(@_);
+}
+
 #
 # EVENTS
 #
@@ -102,6 +125,7 @@ sub add_worker {
         CloseEvent  => '_worker_done',
     );
     $self->set_worker( $wheel->ID => $wheel );
+    $self->set_process( $wheel->PID => $wheel->ID );
     $self->yield( '_worker_started' => $wheel->ID => $job );
     return ( $wheel->ID => $wheel->PID );
 }
@@ -122,26 +146,28 @@ sub _stop {
 
 sub _sig_child {
     my ($self) = $_[OBJECT];
-    $self->visitor->sig_child( @_[ ARG0 .. ARG2 ] )
-      if $self->visitor->can('sig_child');    # $PID, $ret
-                                              #$_[KERNEL]->signal_handled;
+    $self->visitor->sig_child( $self->get_process($_[ARG1]), $_[ARG2] )
+      if $self->visitor->can('sig_child');
+    $self->remove_process( $_[ARG1] );
+    $_[KERNEL]->sig_handled();
 }
 
 sub _worker_stdout {
     my ($self) = $_[OBJECT];
-    $self->visitor->worker_stdout( @_[ ARG0, ARG1 ] )
-      if $self->visitor->can('worker_stdout');    # $input, $wheel_id
+    $self->visitor->worker_stdout( @_[ ARG0, ARG1 ] )    # $input, $wheel_id
+      if $self->visitor->can('worker_stdout');
 }
 
 sub _worker_stderr {
     my ($self) = $_[OBJECT];
     $_[ARG1] =~ tr[ -~][]cd;
-    $self->visitor->worker_stderr( @_[ ARG0, ARG1 ] )
-      if $self->visitor->can('worker_stderr');    # $input, $wheel_id
+    $self->visitor->worker_stderr( @_[ ARG0, ARG1 ] )    # $input, $wheel_id
+      if $self->visitor->can('worker_stderr');
 }
 
 sub _worker_error {
     my ($self) = $_[OBJECT];
+    return if $_[ARG0] eq "read" && $_[ARG1] == 0;
 
     # $operation, $errnum, $errstr, $wheel_id
     $self->visitor->worker_error( @_[ ARG0 .. ARG3 ] )
@@ -153,6 +179,12 @@ sub _worker_done {
     $self->visitor->worker_done( $_[ARG0] )
       if $self->visitor->can('worker_done');
     $self->delete_worker( $_[ARG0] );
+}
+
+sub delete_worker {
+    my ( $self, $wheelID ) = @_;
+    my $wheel = $self->get_worker($wheelID);
+    $self->remove_worker( $wheel->ID );
 }
 
 sub _worker_started {
@@ -184,6 +216,8 @@ MooseX::Workers::Engine - Provide the workhorse to MooseX::Workers
               max_workers
               has_workers
               num_workers
+              put_worker
+              kill_worker
               )
         ],
     );

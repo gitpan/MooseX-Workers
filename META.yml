@@ -5,7 +5,7 @@ author:
 build_requires:
   Test::More: 0.42
 distribution_type: module
-generated_by: 'Module::Install version 0.77'
+generated_by: 'Module::Install version 0.80'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -17,9 +17,10 @@ no_index:
     - inc
     - t
 requires:
-  Moose: 0
-  MooseX::AttributeHelpers: 0
-  POE: 0
+  Moose: 0.75
+  MooseX::AttributeHelpers: 0.14
+  POE: 1.004
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.04
+  repository: git://github.com/perigrin/moosex-workers.git
+version: 0.05

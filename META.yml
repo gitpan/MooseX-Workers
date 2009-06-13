@@ -1,11 +1,14 @@
 ---
 abstract: 'Provides a simple sub-process management for asynchronous tasks.'
 author:
-  - 'Chris Prather  C<< <perigrin@cpan.org> >>'
+  - 'Chris Prather C<< <perigrin@cpan.org> >>'
 build_requires:
+  ExtUtils::MakeMaker: 6.42
   Test::More: 0.42
+configure_requires:
+  ExtUtils::MakeMaker: 6.42
 distribution_type: module
-generated_by: 'Module::Install version 0.80'
+generated_by: 'Module::Install version 0.91'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -22,5 +25,4 @@ requires:
   POE: 1.004
 resources:
   license: http://dev.perl.org/licenses/
-  repository: git://github.com/perigrin/moosex-workers.git
-version: 0.05
+version: 0.06_99

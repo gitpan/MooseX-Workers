@@ -15,6 +15,7 @@ has max_workers => (
     default => sub { 5 },
 );
 
+# Processes currently running
 has process_list => (
     metaclass  => 'Collection::Hash',
     isa        => 'HashRef',
@@ -25,6 +26,19 @@ has process_list => (
         set    => 'set_process',
         get    => 'get_process',
         delete => 'remove_process',
+    }
+);
+
+# Processes waiting to run
+has process_queue => (
+    metaclass  => 'Collection::Array',
+    isa        => 'ArrayRef',
+    is         => 'rw',
+    auto_deref => 1,
+    default    => sub { [] },
+    provides   => {
+        'push'  => 'enqueue_process',
+        'shift' => 'dequeue_process',
     }
 );
 
@@ -41,6 +55,22 @@ has workers => (
         'delete' => 'remove_worker',
         'empty'  => 'has_workers',
         'count'  => 'num_workers',
+    },
+);
+
+has jobs => (
+    isa       => 'HashRef',
+    is        => 'rw',
+    lazy      => 1,
+    required  => 1,
+    default   => sub { {} },
+    metaclass => 'Collection::Hash',
+    provides  => {
+        'set'    => 'set_job',
+        'get'    => 'get_job',
+        'delete' => 'remove_job',
+        'empty'  => 'has_jobs',
+        'count'  => 'num_jobs',
     },
 );
 
@@ -63,6 +93,7 @@ has session => (
                       _worker_started
                       _sig_child
                       add_worker
+                      _kill_worker
                       )
                 ],
             ],
@@ -97,12 +128,17 @@ sub kill_worker {
 #
 
 sub add_worker {
-    my ( $self, $job, $args ) = @_[ OBJECT, ARG0, ARG1 ];
+    my ( $self, $job, $args, $kernel, $heap ) = @_[ OBJECT, ARG0, ARG1, KERNEL, HEAP ];
 
     # if we've reached the worker threashold, set off a warning
     if ( $self->num_workers >= $self->max_workers ) {
-        $self->visitor->max_workers_reached($job);
-        return;
+        if ( $args->{enqueue} ) {
+            $self->enqueue_process([$job, $args]);
+            return;
+        } else {
+            $self->visitor->max_workers_reached($job);
+            return;
+        }
     }
 
     my $command;
@@ -125,8 +161,25 @@ sub add_worker {
     );
     $self->set_worker( $wheel->ID => $wheel );
     $self->set_process( $wheel->PID => $wheel->ID );
+    if ( blessed($job) && $job->isa('MooseX::Workers::Job') ) {
+       $job->ID($wheel->ID);
+       $job->PID($wheel->PID);
+       $self->set_job( $wheel->ID => $job );
+       if ($job->timeout) {
+          $$heap{wheel_to_timer}{$wheel->ID} =
+             $kernel->delay_set('_kill_worker', $job->timeout, $wheel->ID);
+       }
+    } 
     $self->yield( '_worker_started' => $wheel->ID => $job );
     return ( $wheel->ID => $wheel->PID );
+}
+
+sub _kill_worker {
+    my ( $self, $wheel_id ) = @_[ OBJECT, ARG0 ];
+    my $job = $self->get_job($wheel_id);
+    $self->visitor->worker_timeout( $job )
+      if $self->visitor->can('worker_timeout');
+    $self->get_worker($wheel_id)->kill;
 }
 
 sub _start {
@@ -152,15 +205,17 @@ sub _sig_child {
 }
 
 sub _worker_stdout {
-    my ($self) = $_[OBJECT];
-    $self->visitor->worker_stdout( @_[ ARG0, ARG1 ] )    # $input, $wheel_id
+    my ($self, $input, $wheel_id) = @_[ OBJECT, ARG0, ARG1 ];
+    my $job = $self->get_job($wheel_id);
+    $self->visitor->worker_stdout( $input, $job || $wheel_id )
       if $self->visitor->can('worker_stdout');
 }
 
 sub _worker_stderr {
-    my ($self) = $_[OBJECT];
-    $_[ARG1] =~ tr[ -~][]cd;
-    $self->visitor->worker_stderr( @_[ ARG0, ARG1 ] )    # $input, $wheel_id
+    my ($self, $input, $wheel_id) = @_[ OBJECT, ARG0, ARG1 ];
+    $wheel_id =~ tr[ -~][]cd;
+    my $job = $self->get_job($wheel_id);
+    $self->visitor->worker_stderr( $input, $job || $wheel_id )
       if $self->visitor->can('worker_stderr');
 }
 
@@ -174,10 +229,27 @@ sub _worker_error {
 }
 
 sub _worker_done {
-    my ($self) = $_[OBJECT];
-    $self->visitor->worker_done( $_[ARG0] )
-      if $self->visitor->can('worker_done');
-    $self->delete_worker( $_[ARG0] );
+    my ($self, $wheel_id, $kernel, $heap) = @_[ OBJECT, ARG0, KERNEL, HEAP ];
+    my $job = $self->get_job($wheel_id);
+    $kernel->alarm_remove(delete $$heap{wheel_to_timer}{$wheel_id});
+    if ($self->visitor->can('worker_done')) {
+        if ($job) {
+            $self->visitor->worker_done( $job );
+        } else {
+            $self->visitor->worker_done( $wheel_id );
+        }
+    }
+    $self->delete_worker( $wheel_id );
+
+    # If we have free workers and processes in queue, then dequeue one of them.
+    while ( $self->num_workers < $self->max_workers && 
+            (my $jobref = $self->dequeue_process)
+    ) {
+        my ($cmd, $args) = @$jobref;
+        # This has to be call(), not yield() so num_workers increments before
+        # next loop above.
+        $self->call(add_worker => $cmd, $args);
+    }
 }
 
 sub delete_worker {
@@ -187,9 +259,15 @@ sub delete_worker {
 }
 
 sub _worker_started {
-    my ( $self, $wheelid, $command ) = @_[ OBJECT, ARG0, ARG1 ];
-    $self->visitor->worker_started( $wheelid, $command )
-      if $self->visitor->can('worker_started');
+    my ( $self, $wheel_id, $command ) = @_[ OBJECT, ARG0, ARG1 ];
+    my $job = $self->get_job($wheel_id);
+    if ($self->visitor->can('worker_started')) {
+        if ($job) {
+            $self->visitor->worker_started( $job )
+        } else {
+            $self->visitor->worker_started( $wheel_id, $command )
+        }
+    }
 }
 
 no Moose;
@@ -201,9 +279,9 @@ __END__
 MooseX::Workers::Engine - Provide the workhorse to MooseX::Workers
 
 =head1 SYNOPSIS
-    
+
     package MooseX::Workers;
-    
+
     has Engine => (
         isa      => 'MooseX::Workers::Engine',
         is       => 'ro',
@@ -220,11 +298,12 @@ MooseX::Workers::Engine - Provide the workhorse to MooseX::Workers
               )
         ],
     );
-  
+
 =head1 DESCRIPTION
 
 MooseX::Workers::Engine provides the main functionality 
-to MooseX::Workers. It wraps a POE::Session and 
+to MooseX::Workers. It wraps a POE::Session and as many POE::Wheel::Run
+objects as it needs.
 
 =head1 ATTRIBUTES
 
@@ -260,7 +339,7 @@ Helper method to post events to our internal manager session.
 
 Helper method to call events to our internal manager session. 
 This is synchronous and will block incoming data from the children 
-if it takes too long  to return.
+if it takes too long to return.
 
 =item set_worker($key)
 
@@ -356,14 +435,16 @@ Called when the mangaging session recieves a SIG CHDL event
 
 =back
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Chris Prather  C<< <perigrin@cpan.org> >>
+
+Jay Hannah  C<< <jay@jays.net> >>
 
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2007, Chris Prather C<< <perigrin@cpan.org> >>. All rights reserved.
+Copyright (c) 2007-2009, Chris Prather C<< <perigrin@cpan.org> >>. All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

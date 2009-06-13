@@ -1,6 +1,7 @@
 package MooseX::Workers;
 use Moose::Role;
-our $VERSION = '0.05';
+use MooseX::Workers::Job;
+our $VERSION = '0.06_99';        # _99 apparently tells PAUSE/CPAN development release
 
 use MooseX::Workers::Engine;
 
@@ -34,6 +35,11 @@ sub run_command {
     $self->Engine->yield( add_worker => $cmd );
 }
 
+sub enqueue {
+    my ( $self, $cmd ) = @_;
+    $self->Engine->call( add_worker => $cmd, { enqueue => 1 } );
+}
+
 sub check_worker_threshold {
     return $_[0]->num_workers >= $_[0]->max_workers;
 }
@@ -51,12 +57,6 @@ __END__
 =head1 NAME
 
 MooseX::Workers - Provides a simple sub-process management for asynchronous tasks.
-
-
-=head1 VERSION
-
-This document describes MooseX::Workers version 0.0.1
-
 
 =head1 SYNOPSIS
 
@@ -84,25 +84,39 @@ This document describes MooseX::Workers version 0.0.1
     no Moose;
 
     Manager->new->run();
-  
+
 =head1 DESCRIPTION
 
 MooseX::Workers is a Role that provides easy delegation of long-running tasks 
 into a managed child process. Process managment is taken care of via POE and it's 
 POE::Wheel::Run module.
 
-
 =head1 METHODS
 
 =over 
 
 =item spawn ($command)
+
 =item fork ($command)
+
 =item run_command ($command)
 
-This is the whole point of this module. This will pass $command through to the 
-MooseX::Worker::Engine which will take care of running this asynchronously.
+These three methods are the whole point of this module. 
+They pass $command through to the MooseX::Worker::Engine which will take 
+care of running $command for you.
 
+spawn() and fork() both envoke L<POE::Kernel> call(), which is synchronous.
+
+run_command() envokes L<POE::Kernel> yield(), which is asynchronous.
+
+If max_workers() has been reached, run_command() warns and does nothing. It is up to you to re-submit
+$command. See enqueue() if you want us to run $command as soon as another worker is free.
+
+=item enqueue($command)
+
+Just like run_command(), only that if max_workers() has been set and that number of workers
+has been reached, then we add $command to a FIFO command queue. As soon as any running 
+worker exits, the first $command in queue (if any) will be run.
 
 =item check_worker_threshold
 
@@ -171,7 +185,10 @@ Called when the mangaging session recieves a SIG CHDL event
 
 =back
 
-See MooseX::Workers::Engine for more details.
+See L<MooseX::Workers::Engine> for more details. 
+Also see L<MooseX::Workers::Job> if you'd like to give your tasks
+names, or set timeouts on them.
+
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -181,9 +198,8 @@ See MooseX::Workers::Engine for more details.
     files, and the meaning of any environment variables or properties
     that can be set. These descriptions must also include details of any
     configuration language used.
-  
-MooseX::Workers requires no configuration files or environment variables.
 
+MooseX::Workers requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
@@ -195,7 +211,6 @@ MooseX::Workers requires no configuration files or environment variables.
 
 Moose, POE, POE::Wheel::Run
 
-
 =head1 INCOMPATIBILITIES
 
 =for author to fill in:
@@ -206,7 +221,6 @@ Moose, POE, POE::Wheel::Run
     filters are mutually incompatible).
 
 None reported.
-
 
 =head1 BUGS AND LIMITATIONS
 
@@ -226,15 +240,18 @@ C<bug-moosex-workers@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.
 
 
-=head1 AUTHOR
+=head1 AUTHORS
 
-Chris Prather  C<< <perigrin@cpan.org> >>
+Chris Prather C<< <perigrin@cpan.org> >>
 
 Tom Lanyon C<< <dec@cpan.org> >>
 
+Jay Hannah C<< <jay@jays.net> >>
+
+
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2007, Chris Prather C<< <perigrin@cpan.org> >>. Some rights reserved.
+Copyright (c) 2007-2009, Chris Prather C<< <perigrin@cpan.org> >>. Some rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

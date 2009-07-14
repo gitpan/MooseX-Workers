@@ -23,6 +23,8 @@ t/01.worker.t
 t/02.wheel.t
 t/03.role.t
 t/10.worker.enqueue.t
+t/11.worker.job.args.t
 t/11.worker.job.t
 t/12.worker.timeout1.t
 t/13.worker.timeout2.t
+t/synopsis.pl

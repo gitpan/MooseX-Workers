@@ -1,9 +1,6 @@
-use Test::More tests => 14;
+use Test::More tests => 202;
 use lib qw(lib);
 use strict;
-
-my $starttime = time;
-# print "starttime is $starttime\n";
 
 {
     package Manager;
@@ -32,26 +29,23 @@ my $starttime = time;
 
     sub worker_done  { 
         my ( $self, $wheel ) = @_;
-        my $now = time;
-        if ($wheel < 3) {
-           ::ok($now == $starttime + 2 || $now == $starttime + 3, 
-                                                "worker $wheel done in 2-3 seconds");
-        } else {
-           ::cmp_ok($now, '>=', $starttime + 4, "worker $wheel done in >= 4 seconds");
-        }
+        # ::pass("worker $wheel done");
+        my $num = $self->num_workers;
+        ::cmp_ok($num, '<=', 3, "num_workers: $num <= 3");
     }
 
     sub worker_started { 
         my ( $self, $wheel ) = @_;
-        ::pass("worker $wheel started");
+        # ::pass("worker $wheel started");
+        my $num = $self->num_workers;
+        ::cmp_ok($num, '<=', 3, "num_workers: $num <= 3");
     }
     
     sub run { 
-        for my $num (1..3) {
+        for my $num (1..50) {
             $_[0]->enqueue( sub { 
                 print "HELLO $num\n"; 
                 print STDERR "WORLD $num\n"; 
-                sleep 2;
             } );
         }
         POE::Kernel->run();
@@ -60,7 +54,7 @@ my $starttime = time;
 }
 
 my $Manager = Manager->new();
-$Manager->max_workers(2);    # Third job should have to wait for the second round of processing.
+$Manager->max_workers(3);    # Third job should have to wait for the second round of processing.
 $Manager->run();
 
 

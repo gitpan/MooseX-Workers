@@ -1,5 +1,5 @@
 ---
-abstract: 'Provides a simple sub-process management for asynchronous tasks.'
+abstract: 'Simple sub-process management for asynchronous tasks'
 author:
   - 'Chris Prather C<< <perigrin@cpan.org> >>'
 build_requires:
@@ -22,4 +22,4 @@ requires:
   POE: 1.004
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.08
+version: 0.09

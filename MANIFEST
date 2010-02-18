@@ -28,5 +28,3 @@ t/11.worker.job.t
 t/12.worker.timeout1.t
 t/13.worker.timeout2.t
 t/synopsis.pl
-t/test.pl
-t/test2.pl

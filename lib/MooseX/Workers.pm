@@ -1,7 +1,7 @@
 package MooseX::Workers;
 use Moose::Role;
 use MooseX::Workers::Job;
-our $VERSION = '0.09';        # http://www.cpan.org/modules/04pause.html - Developer releases
+our $VERSION = '0.10';        # http://www.cpan.org/modules/04pause.html - Developer releases
 
 use MooseX::Workers::Engine;
 
@@ -219,10 +219,12 @@ Tom Lanyon C<< <dec@cpan.org> >>
 
 Jay Hannah C<< <jay@jays.net> >>
 
+Justin Hunter C<< <justin.d.hunter@gmail.com> >>
+
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2007-2009, Chris Prather C<< <perigrin@cpan.org> >>. Some rights reserved.
+Copyright (c) 2007-2010, Chris Prather C<< <perigrin@cpan.org> >>. Some rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.
@@ -250,3 +252,9 @@ RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
 FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
 SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
+
+=cut
+
+1;
+
+

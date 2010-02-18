@@ -1,11 +1,9 @@
 package MooseX::Workers::Engine;
 use Moose;
 use POE qw(Wheel::Run);
-use MooseX::AttributeHelpers;
 
 has visitor => (
     is       => 'ro',
-    required => 1,
     does     => 'MooseX::Workers',
 );
 
@@ -17,60 +15,58 @@ has max_workers => (
 
 # Processes currently running
 has process_list => (
-    metaclass  => 'Collection::Hash',
+    traits     => [ 'Hash' ],
     isa        => 'HashRef',
-    is         => 'ro',
-    auto_deref => 1,
     default    => sub { {} },
-    provides   => {
-        set    => 'set_process',
-        get    => 'get_process',
-        delete => 'remove_process',
+    handles    => {
+        set_process    => 'set',
+        get_process    => 'get',
+        remove_process => 'delete',
+        process_list   => 'kv',
     }
 );
 
 # Processes waiting to run
 has process_queue => (
-    metaclass  => 'Collection::Array',
+    traits     => [ 'Array' ],
     isa        => 'ArrayRef',
-    is         => 'rw',
-    auto_deref => 1,
     default    => sub { [] },
-    provides   => {
-        'push'  => 'enqueue_process',
-        'shift' => 'dequeue_process',
+    handles    => {
+        enqueue_process => 'push',
+        dequeue_process => 'shift',
+        process_queue   => 'elements',
     }
 );
 
 has workers => (
+    traits    => [ 'Hash' ],
     isa       => 'HashRef',
     is        => 'rw',
     lazy      => 1,
     required  => 1,
     default   => sub { {} },
-    metaclass => 'Collection::Hash',
-    provides  => {
-        'set'    => 'set_worker',
-        'get'    => 'get_worker',
-        'delete' => 'remove_worker',
-        'empty'  => 'has_workers',
-        'count'  => 'num_workers',
+    handles   => {
+        set_worker    => 'set',
+        get_worker    => 'get',
+        remove_worker => 'delete',
+        has_workers   => 'count',
+        num_workers   => 'count',
     },
 );
 
 has jobs => (
+    traits    => [ 'Hash' ],
     isa       => 'HashRef',
     is        => 'rw',
     lazy      => 1,
     required  => 1,
     default   => sub { {} },
-    metaclass => 'Collection::Hash',
-    provides  => {
-        'set'    => 'set_job',
-        'get'    => 'get_job',
-        'delete' => 'remove_job',
-        'empty'  => 'has_jobs',
-        'count'  => 'num_jobs',
+    handles   => {
+        set_job    => 'set',
+        get_job    => 'get',
+        remove_job => 'delete',
+        has_jobs   => 'count',
+        num_jobs   => 'count',
     },
 );
 
@@ -437,41 +433,8 @@ Called when the managing session receives a SIG CHLD event.
 
 =back
 
-=head1 AUTHORS
+=cut
 
-Chris Prather  C<< <perigrin@cpan.org> >>
+1;
 
-Jay Hannah  C<< <jay@jays.net> >>
-
-
-=head1 LICENCE AND COPYRIGHT
-
-Copyright (c) 2007-2009, Chris Prather C<< <perigrin@cpan.org> >>. All rights reserved.
-
-This module is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself. See L<perlartistic>.
-
-
-=head1 DISCLAIMER OF WARRANTY
-
-BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
-ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
-YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
-NECESSARY SERVICING, REPAIR, OR CORRECTION.
-
-IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
-WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
-LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
-OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
-THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
-RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
-FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
-SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
 

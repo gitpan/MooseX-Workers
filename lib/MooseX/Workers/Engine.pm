@@ -46,11 +46,12 @@ has workers => (
     required  => 1,
     default   => sub { {} },
     handles   => {
-        set_worker    => 'set',
-        get_worker    => 'get',
-        remove_worker => 'delete',
-        has_workers   => 'count',
-        num_workers   => 'count',
+        set_worker     => 'set',
+        get_worker     => 'get',
+        remove_worker  => 'delete',
+        has_workers    => 'count',
+        num_workers    => 'count',
+        get_worker_ids => 'keys',
     },
 );
 
@@ -116,7 +117,8 @@ sub put_worker {
 
 sub kill_worker {
     my ( $self, $wheel_id ) = splice @_, 0, 2;
-    $self->get_wheel($wheel_id)->kill(@_);
+    $self->get_worker($wheel_id)->kill(@_);
+    $self->remove_worker($wheel_id);
 }
 
 #
@@ -184,6 +186,20 @@ sub _start {
     my ($self) = $_[OBJECT];
     $self->visitor->worker_manager_start()
       if $self->visitor->can('worker_manager_start');
+
+    # Set an alias to ensure our manager session is not cleaned up.
+    $_[KERNEL]->alias_set("manager");
+
+    # Register the generic signal handler for any signals our visitor
+    # class wishes to receive.
+    my @visitor_methods = map { $_->name } $self->visitor->meta->get_all_methods;
+    for my $sig_handler (grep { /^sig_/ } @visitor_methods){
+        (my $sig) = ($sig_handler =~ /^sig_(.*)/);
+        next if uc($sig) eq 'CHLD' or uc($sig) eq 'CHILD';
+
+        $poe_kernel->state( $sig_handler, $self, '_sig_handler' );
+        $poe_kernel->sig( $sig => $sig_handler );
+    }
 }
 
 sub _stop {
@@ -198,6 +214,13 @@ sub _sig_child {
     $self->visitor->sig_child( $self->get_process($_[ARG1]), $_[ARG2] )
       if $self->visitor->can('sig_child');
     $self->remove_process( $_[ARG1] );
+    $_[KERNEL]->sig_handled();
+}
+
+# A generic sig handler (for everything except SIGCHLD)
+sub _sig_handler {
+    my ($self, $state) = @_[OBJECT,STATE];
+    $self->visitor->$state( @_[ARG0..ARG9] );
     $_[KERNEL]->sig_handled();
 }
 
@@ -391,7 +414,7 @@ See POE::Wheel::Run for more details.
 
 =head1 INTERFACE 
 
-MooseX::Worker::Engine fires the following callbacks:
+MooseX::Worker::Engine fires the following callbacks to its visitor object:
 
 =over
 
@@ -430,6 +453,20 @@ Called when a worker starts $command.
 =item sig_child($PID, $ret)
 
 Called when the managing session receives a SIG CHLD event.
+
+=item sig_*
+
+Called when the underlying POE Kernel receives a signal; this is not limited to
+OS signals (ie. what you'd usually handle in Perl's %SIG) so will also accept
+arbitrary POE signals (sent via POE::Kernel->signal), but does exclude
+SIGCHLD/SIGCHILD, which is instead handled by sig_child above.
+
+These interface methods are automatically inserted when MooseX::Worker::Engine
+detects that the visitor object contains any methods beginning with sig_.
+Signals are case-sensitive, so if you wish to handle a TERM signal, you must
+define a sig_TERM() method.  Note also that this action is performed upon
+MooseX::Worker::Engine startup, so any run-time modification of the visitor
+object is not likely to be detected.
 
 =back
 

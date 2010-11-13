@@ -1,6 +1,13 @@
-use Test::More tests => 14;
+use Test::More;
 use lib qw(lib);
 use strict;
+
+if ($^O eq 'MSWin32') {
+    plan skip_all => "$^O does not support signals";
+}
+else {
+    plan tests => 14;
+}
 
 {
     package Manager;
@@ -41,7 +48,7 @@ use strict;
 
     sub run { 
         my $job = MooseX::Workers::Job->new(
-            command => sub { print "HELLO\n"; print STDERR "WORLD\n"; },
+            command => sub { if ($^O eq 'MSWin32') { binmode STDOUT; binmode STDERR; } print "HELLO\n"; print STDERR "WORLD\n"; },
         );
         $_[0]->run_command( $job );
         POE::Kernel->run();

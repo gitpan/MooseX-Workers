@@ -5,8 +5,11 @@ use lib qw(lib);
 
     package Manager;
     use Moose;
+	use POE::Filter::Reference;
     with qw(MooseX::Workers);
 
+	sub stdout_filter { ::pass("stdout_filter was called"); new POE::Filter::Reference; }
+	
     sub worker_manager_start {
         ::pass('started worker manager');
     }
@@ -17,31 +20,27 @@ use lib qw(lib);
 
     sub worker_stdout {
         my ( $self, $output ) = @_;
-        ::is( $output, 'HELLO', 'STDOUT' );
+        ::is( $output->{msg}, 'HELLO' );
     }
 
     sub worker_stderr {
         my ( $self, $output ) = @_;
-        ::is( $output, 'WORLD', 'STDERR' );
+        ::is( $output, 'WORLD' );
     }
-
     sub worker_error { ::fail('Got error?'.@_) }
-
-    sub worker_done  { 
-        my ( $self, $job ) = @_;
-        ::is( $job->name, 'Foo',     '$job->name ' . $job->name );
-        ::is( $job->ID,   1,         '$job->ID '   . $job->ID   );
-        ::cmp_ok( $job->PID, '>', 0, '$job->PID '  . $job->PID  );
-    }
+    sub worker_done  { ::pass('worker done') }
 
     sub worker_started { ::pass('worker started') }
     
     sub run { 
-        my $job = MooseX::Workers::Job->new(
-           command => sub { if ($^O eq 'MSWin32') { binmode STDOUT; binmode STDERR; } print "HELLO\n"; print STDERR "WORLD\n" },
-           name => 'Foo',
-        );
-        $_[0]->spawn( $job );
+        $_[0]->spawn(
+			sub {
+				if ($^O eq 'MSWin32') { binmode STDOUT; binmode STDERR; }
+
+				print STDOUT @{ POE::Filter::Reference->new->put([ {msg => "HELLO"} ]) };
+				print STDERR "WORLD\n"
+			}
+		);
         POE::Kernel->run();
     }
     no Moose;

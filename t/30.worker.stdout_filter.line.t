@@ -1,12 +1,15 @@
-use Test::More tests => 6;
+use Test::More tests => 8;
 use lib qw(lib);
 
 {
 
-    package ManagerRole;
-    use Moose::Role;
+    package Manager;
+    use Moose;
+	use POE::Filter::Line;
     with qw(MooseX::Workers);
 
+	sub stdout_filter { ::pass("stdout_filter was called"); new POE::Filter::Line; }
+	
     sub worker_manager_start {
         ::pass('started worker manager');
     }
@@ -24,22 +27,22 @@ use lib qw(lib);
         my ( $self, $output ) = @_;
         ::is( $output, 'WORLD' );
     }
-    sub worker_error { }
+    sub worker_error { ::fail('Got error?'.@_) }
     sub worker_done  { ::pass('worker done') }
 
     sub worker_started { ::pass('worker started') }
-    no Moose::Role;
-}
-
-{
-
-    package Manager;
-    use Moose;
-    with qw(ManagerRole);
-
+    
+    sub run { 
+        $_[0]->spawn(
+			sub {
+				if ($^O eq 'MSWin32') { binmode STDOUT; binmode STDERR; }
+				print "HELLO\n";
+				print STDERR "WORLD\n"
+			}
+		);
+        POE::Kernel->run();
+    }
     no Moose;
 }
 
-my $m = Manager->new();
-$m->run_command( sub { if ($^O eq 'MSWin32') { binmode STDOUT; binmode STDERR; } print "HELLO\n"; print STDERR "WORLD\n" } );
-POE::Kernel->run();
+Manager->new()->run();

@@ -3,16 +3,12 @@ inc/Module/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
 inc/Module/Install/Base.pm
-inc/Module/Install/Can.pm
-inc/Module/Install/Fetch.pm
 inc/Module/Install/Include.pm
 inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
-inc/Module/Install/Win32.pm
-inc/Module/Install/WriteAll.pm
+inc/Module/Install/Repository.pm
 lib/MooseX/Workers.pm
 lib/MooseX/Workers/Engine.pm
-lib/MooseX/Workers/Engine/PreforkPoe.pm
 lib/MooseX/Workers/Job.pm
 Makefile.PL
 MANIFEST			This list of files
@@ -28,4 +24,9 @@ t/11.worker.job.t
 t/12.worker.timeout1.t
 t/13.worker.timeout2.t
 t/20.worker.SIG.TERM.t
+t/30.worker.stdout_filter.line.t
+t/31.worker.stderr_filter.reference.t
+t/40.worker.stderr_filter.line.t
+t/41.worker.stderr_filter.reference.t
+t/50.consolidate.worker.results.t
 t/synopsis.pl

@@ -8,7 +8,7 @@ build_requires:
 configure_requires:
   ExtUtils::MakeMaker: 6.42
 distribution_type: module
-generated_by: 'Module::Install version 0.91'
+generated_by: 'Module::Install version 0.99'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -21,6 +21,8 @@ no_index:
 requires:
   Moose: 0.90
   POE: 1.004
+  Test::More: 0.42
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.12
+  repository: git://github.com/jhannah/moosex-workers.git
+version: 0.12_01

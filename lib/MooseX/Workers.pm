@@ -1,7 +1,7 @@
 package MooseX::Workers;
 use Moose::Role;
 use MooseX::Workers::Job;
-our $VERSION = '0.12_01';      # http://www.cpan.org/modules/04pause.html - Developer releases
+our $VERSION = '0.12_02';      # http://www.cpan.org/modules/04pause.html - Developer releases
 
 use MooseX::Workers::Engine;
 
@@ -330,6 +330,8 @@ Tom Lanyon C<< <dec@cpan.org> >>
 Jay Hannah C<< <jay@jays.net> >>
 
 Justin Hunter C<< <justin.d.hunter@gmail.com> >>
+
+David K. Storrs C<< <david.storrs@gmail.com> >>
 
 
 =head1 LICENCE AND COPYRIGHT

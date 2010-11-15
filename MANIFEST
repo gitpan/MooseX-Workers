@@ -33,4 +33,5 @@ t/31.worker.stderr_filter.reference.t
 t/40.worker.stderr_filter.line.t
 t/41.worker.stderr_filter.reference.t
 t/50.consolidate.worker.results.t
+t/60.pass.object.from.child.t
 t/synopsis.pl

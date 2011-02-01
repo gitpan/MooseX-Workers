@@ -34,4 +34,8 @@ t/40.worker.stderr_filter.line.t
 t/41.worker.stderr_filter.reference.t
 t/50.consolidate.worker.results.t
 t/60.pass.object.from.child.t
+t/61.set.max_workers.at.ctor.time.t
+t/62.set.max_workers.at.run.time.t
+t/lib/BaseClass.pm
+t/lib/BaseClass/Subclass.pm
 t/synopsis.pl

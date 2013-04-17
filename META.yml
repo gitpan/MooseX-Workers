@@ -23,7 +23,7 @@ meta-spec:
 name: MooseX-Workers
 no_index:
   directory:
-    - t
+    - doc
 requires:
   Moose: 0
   Moose::Role: 0
@@ -34,5 +34,5 @@ resources:
   homepage: http://metacpan.org/release/MooseX-Workers
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jhannah/moosex-workers.git
-version: 0.17
+version: 0.18
 x_authority: cpan:PERIGRIN

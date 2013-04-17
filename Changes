@@ -1,6 +1,9 @@
 Revision history for MooseX-Workers
    Full history: https://github.com/jhannah/moosex-workers
 
+0.18 2013-04-17 13:36:15
+  - tell PAUSE not to index doc/
+
 0.17 2013-04-17 13:21:35
   - convert dist to Dist::Zilla
   - add worker_finished with correct num_workers/has_workers state, deprecate

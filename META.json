@@ -15,7 +15,7 @@
    "name" : "MooseX-Workers",
    "no_index" : {
       "directory" : [
-         "t"
+         "doc"
       ]
    },
    "prereqs" : {
@@ -67,7 +67,7 @@
          "web" : "http://github.com/jhannah/moosex-workers"
       }
    },
-   "version" : "0.17",
+   "version" : "0.18",
    "x_authority" : "cpan:PERIGRIN"
 }
 

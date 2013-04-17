@@ -1,14 +1,21 @@
 ---
 abstract: 'Simple sub-process management for asynchronous tasks'
 author:
-  - 'Chris Prather C<< <perigrin@cpan.org> >>'
+  - 'Chris Prather <perigrin@cpan.org>'
 build_requires:
-  ExtUtils::MakeMaker: 6.42
-  Test::More: 0.42
+  DateTime: 0
+  File::Find: 0
+  File::Temp: 0
+  POE::Filter::Line: 0
+  POE::Filter::Reference: 0
+  Scalar::Util: 0
+  Test::More: 0
+  strict: 0
+  warnings: 0
 configure_requires:
-  ExtUtils::MakeMaker: 6.42
-distribution_type: module
-generated_by: 'Module::Install version 1.00'
+  ExtUtils::MakeMaker: 6.30
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 4.300029, CPAN::Meta::Converter version 2.120921'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -16,13 +23,16 @@ meta-spec:
 name: MooseX-Workers
 no_index:
   directory:
-    - inc
     - t
 requires:
-  DateTime: 0
-  Moose: 0.90
-  POE: 1.004
+  Moose: 0
+  Moose::Role: 0
+  POE: 0
+  POE::Wheel::Run: 0
 resources:
+  bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=MooseX-Workers
+  homepage: http://metacpan.org/release/MooseX-Workers
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jhannah/moosex-workers.git
-version: 0.16
+version: 0.17
+x_authority: cpan:PERIGRIN

@@ -1,7 +1,12 @@
 package MooseX::Workers;
+BEGIN {
+  $MooseX::Workers::AUTHORITY = 'cpan:PERIGRIN';
+}
+{
+  $MooseX::Workers::VERSION = '0.17';
+}
 use Moose::Role;
 use MooseX::Workers::Job;
-our $VERSION = '0.16';      # http://www.cpan.org/modules/04pause.html - Developer releases
 
 use MooseX::Workers::Engine;
 
@@ -107,7 +112,7 @@ MooseX::Workers - Simple sub-process management for asynchronous tasks
 
     sub max_workers_reached  { warn 'maximum worker count reached' }
     sub worker_error   { shift; warn join ' ', @_;  }
-    sub worker_done    { shift; warn join ' ', @_;  }
+    sub worker_finished { warn 'a worker has finished' }
     sub worker_started { shift; warn join ' ', @_;  }
     sub sig_child      { shift; warn join ' ', @_;  }
     sub sig_TERM       { shift; warn 'Handled TERM' }
@@ -172,7 +177,7 @@ MooseX::Workers - Simple sub-process management for asynchronous tasks
 
     sub max_workers_reached  { warn 'maximum worker count reached' }
     sub worker_error   { shift; warn join ' ', @_;  }
-    sub worker_done    { shift; warn join ' ', @_;  }
+    sub worker_finished { warn 'a worker has finished' }
     sub worker_started { shift; warn join ' ', @_;  }
     sub sig_child      { shift; warn join ' ', @_;  }
     sub sig_TERM       { shift; warn 'Handled TERM' }
@@ -285,9 +290,23 @@ C<stderr_filter> if that method is defined.
 
 Called when there is an error condition detected with the child.
 
+=item worker_finished
+
+Called when a worker completes $command.
+
+If the command was a L<MooseX::Workers::Job>, it will get the removed job
+instance as the first parameter.
+
 =item worker_done
 
-Called when a worker completes $command
+B<*DEPRECATED*>
+
+This is called before the worker is removed, so L</num_workers> and
+L</has_workers> does not reflect that a worker has just finished. Use
+L</worker_finished> instead.
+
+Gets the L<MooseX::Workers::Job> instance, if the $command was a job, and the
+L<POE::Wheel::Run> id otherwise.
 
 =item worker_started
 

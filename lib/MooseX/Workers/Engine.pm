@@ -1,4 +1,10 @@
 package MooseX::Workers::Engine;
+BEGIN {
+  $MooseX::Workers::Engine::AUTHORITY = 'cpan:PERIGRIN';
+}
+{
+  $MooseX::Workers::Engine::VERSION = '0.17';
+}
 use Moose;
 use POE qw(Wheel::Run);
 
@@ -276,6 +282,10 @@ sub _worker_done {
         }
     }
     $self->delete_worker( $wheel_id );
+
+    if (my $code = $self->visitor->can('worker_finished')) {
+        $self->visitor->$code($job ? $job : ());
+    }
 
     # If we have free workers and processes in queue, then dequeue one of them.
     while ( $self->num_workers < $self->max_workers && 

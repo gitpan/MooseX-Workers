@@ -1,4 +1,10 @@
 package MooseX::Workers::Job;
+BEGIN {
+  $MooseX::Workers::Job::AUTHORITY = 'cpan:PERIGRIN';
+}
+{
+  $MooseX::Workers::Job::VERSION = '0.17';
+}
 
 use Moose;
 has 'ID'      => ( is => 'rw', isa => 'Int' );   # POE::Wheel::Run->ID

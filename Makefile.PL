@@ -35,7 +35,7 @@ my %WriteMakefileArgs = (
     "POE" => 0,
     "POE::Wheel::Run" => 0
   },
-  "VERSION" => "0.18",
+  "VERSION" => "0.19",
   "test" => {
     "TESTS" => "t/*.t"
   }

@@ -3,7 +3,7 @@ BEGIN {
   $MooseX::Workers::Engine::AUTHORITY = 'cpan:PERIGRIN';
 }
 {
-  $MooseX::Workers::Engine::VERSION = '0.19';
+  $MooseX::Workers::Engine::VERSION = '0.20';
 }
 use Moose;
 use POE qw(Wheel::Run);

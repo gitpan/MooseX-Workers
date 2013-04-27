@@ -3,7 +3,7 @@ BEGIN {
   $MooseX::Workers::Job::AUTHORITY = 'cpan:PERIGRIN';
 }
 {
-  $MooseX::Workers::Job::VERSION = '0.19';
+  $MooseX::Workers::Job::VERSION = '0.20';
 }
 
 use Moose;

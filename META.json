@@ -34,7 +34,9 @@
             "Moose" : "0",
             "Moose::Role" : "0",
             "POE" : "0",
-            "POE::Wheel::Run" : "0"
+            "POE::Wheel::Run" : "0",
+            "Scalar::Util" : "0",
+            "overload" : "0"
          }
       },
       "test" : {
@@ -44,7 +46,6 @@
             "File::Temp" : "0",
             "POE::Filter::Line" : "0",
             "POE::Filter::Reference" : "0",
-            "Scalar::Util" : "0",
             "Test::More" : "0",
             "strict" : "0",
             "warnings" : "0"
@@ -67,7 +68,7 @@
          "web" : "http://github.com/jhannah/moosex-workers"
       }
    },
-   "version" : "0.20",
+   "version" : "0.21",
    "x_authority" : "cpan:PERIGRIN"
 }
 

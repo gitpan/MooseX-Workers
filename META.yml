@@ -8,7 +8,6 @@ build_requires:
   File::Temp: 0
   POE::Filter::Line: 0
   POE::Filter::Reference: 0
-  Scalar::Util: 0
   Test::More: 0
   strict: 0
   warnings: 0
@@ -29,10 +28,12 @@ requires:
   Moose::Role: 0
   POE: 0
   POE::Wheel::Run: 0
+  Scalar::Util: 0
+  overload: 0
 resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=MooseX-Workers
   homepage: http://metacpan.org/release/MooseX-Workers
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jhannah/moosex-workers.git
-version: 0.20
+version: 0.21
 x_authority: cpan:PERIGRIN

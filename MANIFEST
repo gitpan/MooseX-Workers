@@ -11,6 +11,7 @@ doc/example_usage/app_workers.pl
 doc/yapc2009/workers.graffle
 doc/yapc2009/workers.odp
 doc/yapc2009/workers.pdf
+inc/MooseXWorkersMaker.pm
 lib/MooseX/Workers.pm
 lib/MooseX/Workers/Engine.pm
 lib/MooseX/Workers/Job.pm

@@ -1,6 +1,9 @@
 Revision history for MooseX-Workers
    Full history: https://github.com/jhannah/moosex-workers
 
+0.23 2013-04-30 18:40:46
+  - check class mutability when adding around for Win32
+
 0.22 2013-04-30 14:03:39
   - don't quote external prog/args on Win32 (broke in cmd)
   - skip 10.worker.enqueue.t on Win32 (fails sometimes, cannot reproduce)

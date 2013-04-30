@@ -1,6 +1,10 @@
 Revision history for MooseX-Workers
    Full history: https://github.com/jhannah/moosex-workers
 
+0.22 2013-04-30 14:03:39
+  - don't quote external prog/args on Win32 (broke in cmd)
+  - skip 10.worker.enqueue.t on Win32 (fails sometimes, cannot reproduce)
+
 0.21 2013-04-29 01:36:27
   - much better compatibility with Win32
   - wrap non-job workers in an anon job (which stringifies/numifies to wheel ID

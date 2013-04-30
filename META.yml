@@ -28,12 +28,14 @@ requires:
   Moose::Role: 0
   POE: 0
   POE::Wheel::Run: 0
+  Package::Stash: 0
   Scalar::Util: 0
+  Try::Tiny: 0
   overload: 0
 resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=MooseX-Workers
   homepage: http://metacpan.org/release/MooseX-Workers
   license: http://dev.perl.org/licenses/
   repository: git://github.com/jhannah/moosex-workers.git
-version: 0.21
+version: 0.22
 x_authority: cpan:PERIGRIN
